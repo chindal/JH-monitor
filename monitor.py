@@ -71,6 +71,7 @@ def check_page():
 # ===== 실행 =====
 print("모니터링 시작")
 
+send_telegram("✅ 테스트 메시지 - 정상 작동")
 found_before = load_state()
 found_now = check_page()
 
