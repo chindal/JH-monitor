@@ -1,3 +1,6 @@
+print("TOKEN:", TELEGRAM_TOKEN)
+print("CHAT_ID:", CHAT_ID)
+
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
