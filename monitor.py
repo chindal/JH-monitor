@@ -5,9 +5,8 @@ import os
 import json
 
 # ===== 환경 변수 (GitHub Secrets) =====
-TELEGRAM_TOKEN = os.getenv("8735494200:AAELCTt4DOM5iV_B6nqme7vzDLg5Nnfs1D8
-")
-CHAT_ID = os.getenv("8770376534")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 STATE_FILE = "state.json"
 
