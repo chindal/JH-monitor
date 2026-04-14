@@ -1,6 +1,3 @@
-print("TOKEN:", TELEGRAM_TOKEN)
-print("CHAT_ID:", CHAT_ID)
-
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -74,7 +71,9 @@ def check_page():
 # ===== 실행 =====
 print("모니터링 시작")
 
-send_telegram("✅ 테스트 메시지 - 정상 작동")
+def main():
+    send_telegram("🔥 테스트 메시지")
+    return  # 👈 여기 추가 (강제 종료)
 found_before = load_state()
 found_now = check_page()
 
