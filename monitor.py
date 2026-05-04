@@ -53,63 +53,19 @@ def get_urls():
 
 # ===== GitHub state 읽기 =====
 def load_state():
-
-    url = f"https://api.github.com/repos/{REPO}/contents/{STATE_FILE}"
-
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}"
-    }
-
-    response = requests.get(url, headers=headers)
-    print("STATE 불러오기 응답:")
-    print(response.text)
-
-    if response.status_code == 200:
-
-        content = response.json()["content"]
-
-        decoded = base64.b64decode(content).decode("utf-8")
-
-        try:
-            return json.loads(decoded)
-
-        except:
-            return {}
-
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except:
+                return {}
     return {}
 
 # ===== GitHub state 저장 =====
 def save_state(data):
-
-    url = f"https://api.github.com/repos/{REPO}/contents/{STATE_FILE}"
-
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}"
-    }
-
-    response = requests.get(url, headers=headers)
-
-    sha = None
-
-    if response.status_code == 200:
-        sha = response.json()["sha"]
-
-    content_text = json.dumps(data, ensure_ascii=False)
-
-    encoded_content = base64.b64encode(
-        content_text.encode("utf-8")
-    ).decode("utf-8")
-
-    body = {
-        "message": "update state",
-        "content": encoded_content,
-        "sha": sha
-    }
-
-    res = requests.put(url, headers=headers, json=body)
-
-    print("STATE 저장 응답:")
-    print(res.text)
+    with open(STATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print("state.txt 파일 로컬 저장 완료")
 
 # ===== Selenium 브라우저 =====
 def create_driver():
