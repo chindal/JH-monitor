@@ -187,7 +187,7 @@ def main():
     # 🚨 새로 추가
     if added:
 
-    grouped_dates = {}
+        grouped_dates = {}
 
     for item in added:
 
@@ -210,7 +210,7 @@ def main():
     # ❌ 삭제
     if removed:
 
-    grouped_dates = {}
+        grouped_dates = {}
 
     for item in removed:
 
