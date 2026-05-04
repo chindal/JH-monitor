@@ -187,27 +187,48 @@ def main():
     # 🚨 새로 추가
     if added:
 
-        message = "🚨 JH 추가됨!\n\n"
+    grouped_dates = {}
 
-        for item in added:
-            date_only = item.split("]")[0].replace("[", "")
+    for item in added:
 
-            message += f"📅 {date_only} 변경 감지\n"
-            
+        date_only = item.split("]")[0].replace("[", "")
 
-        send_telegram(message)
+        if date_only not in grouped_dates:
+            grouped_dates[date_only] = []
+
+        grouped_dates[date_only].append(item)
+
+    message = "🚨 JH 변경 감지\n"
+
+    for date in grouped_dates:
+
+        message += f"\n📅 {date}\n"
+        message += "- 변경 감지됨\n"
+
+    send_telegram(message)
 
     # ❌ 삭제
     if removed:
 
-        message = "❌ JH 삭제됨!\n\n"
+    grouped_dates = {}
 
-        for item in removed:
-            date_only = item.split("]")[0].replace("[", "")
+    for item in removed:
 
-            message += f"📅 {date_only} 변경 감지\n"
+        date_only = item.split("]")[0].replace("[", "")
 
-        send_telegram(message)
+        if date_only not in grouped_dates:
+            grouped_dates[date_only] = []
+
+        grouped_dates[date_only].append(item)
+
+    message = "❌ JH 삭제 감지\n"
+
+    for date in grouped_dates:
+
+        message += f"\n📅 {date}\n"
+        message += "- 삭제 감지됨\n"
+
+    send_telegram(message)
 
     # 상태 저장
     save_state(new_data)
