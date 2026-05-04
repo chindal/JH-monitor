@@ -114,7 +114,7 @@ def check_page():
 
         driver.get(BASE_URL)
 
-        time.sleep(3)
+        time.sleep(5)
 
         dates = [
             datetime.now(),
@@ -139,7 +139,7 @@ def check_page():
             # 엔터 대신 JS submit
             driver.execute_script("document.forms[0].submit();")
 
-            time.sleep(3)
+            time.sleep(5)
 
             soup = BeautifulSoup(driver.page_source, "html.parser")
 
@@ -151,13 +151,12 @@ def check_page():
 
                 for row in rows:
 
-                    row_text = row.get_text(" ", strip=True)
+                    row_html = str(row)
 
-                    if "JH" in row_text:
-
-                        full_text = f"[{date_str}] {row_text}"
-
+                    if "JH" in row_html:
+                        full_text = f"[{date_str}] {row_html}"
                         found_rows.append(full_text)
+                    row_text = row.get_text(" ", strip=True)
 
         print("감지 결과:")
         print(found_rows)
@@ -191,7 +190,7 @@ def main():
         message = "🚨 JH 추가됨!\n\n"
 
         for item in added:
-            message += f"- {item}\n"
+            message += "- 변경 감지됨\n"
 
         send_telegram(message)
 
@@ -201,7 +200,7 @@ def main():
         message = "❌ JH 삭제됨!\n\n"
 
         for item in removed:
-            message += f"- {item}\n"
+            message += "- 변경 감지됨\n"
 
         send_telegram(message)
 
