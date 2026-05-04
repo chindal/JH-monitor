@@ -190,7 +190,10 @@ def main():
         message = "🚨 JH 추가됨!\n\n"
 
         for item in added:
-            message += "- 변경 감지됨\n"
+            date_only = item.split("]")[0].replace("[", "")
+
+            message += f"📅 {date_only} 변경 감지\n"
+            
 
         send_telegram(message)
 
@@ -200,7 +203,9 @@ def main():
         message = "❌ JH 삭제됨!\n\n"
 
         for item in removed:
-            message += "- 변경 감지됨\n"
+            date_only = item.split("]")[0].replace("[", "")
+
+            message += f"📅 {date_only} 변경 감지\n"
 
         send_telegram(message)
 
