@@ -74,24 +74,22 @@ def save_state(state):
 # ===== 표 안에서 JH 정확 감지 =====
 def check_page():
     url = get_url()
+
     response = requests.get(url)
+
+    print("페이지 접속 완료")
+
     soup = BeautifulSoup(response.text, "html.parser")
 
-    tables = soup.find_all("table")
+    text = soup.get_text()
 
-    for table in tables:
-        rows = table.find_all("tr")
+    print(text)
 
-        for row in rows:
-            cols = row.find_all(["td", "th"])
+    if "JH" in text:
+        print("JH 발견!")
+        return True
 
-            for col in cols:
-                cell_text = col.get_text(strip=True)
-
-                # 🎯 정확히 JH만 감지
-                if "JH" in cell_text:
-                    return True
-
+    print("JH 없음")
     return False
 
 # ===== 메인 실행 =====
