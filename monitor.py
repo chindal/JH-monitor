@@ -216,7 +216,7 @@ def main():
         message = "🚨 JH 새로 생성됨\n"
 
         for d in added_dates:
-            message += f"\n📅 {d}"
+            message += f"\n\n📅 {d}"
 
         send_telegram(message)
 
@@ -226,7 +226,7 @@ def main():
         message = "🔄 JH 변경 감지\n"
 
         for d in changed_dates:
-            message += f"\n📅 {d}"
+            message += f"\n\n📅 {d}"
 
         send_telegram(message)
 
@@ -236,7 +236,7 @@ def main():
         message = "❌ JH 삭제됨\n"
 
         for d in removed_dates:
-            message += f"\n📅 {d}"
+            message += f"\n\n📅 {d}"
 
         send_telegram(message)
 
