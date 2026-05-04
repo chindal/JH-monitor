@@ -86,7 +86,7 @@ def check_page():
 
 # ===== 메인 실행 =====
 def main():
-    print("모니터링 시작")
+    send_telegram("✅ GitHub 테스트 메시지")
 
     found_before = load_state()
     found_now = check_page()
