@@ -18,13 +18,23 @@ def get_url():
     return f"http://www.incheonpilot.com/pilot/pilot04.asp?Datepicker_date={today}"
 
 # ===== 텔레그램 전송 =====
-def send_telegram(msg):
+def send_telegram(message):
+    print("텔레그램 함수 실행됨")
+
+    print("TOKEN:", TELEGRAM_TOKEN)
+    print("CHAT_ID:", CHAT_ID)
+
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+
     data = {
         "chat_id": CHAT_ID,
-        "text": msg
+        "text": message
     }
-    requests.post(url, data=data)
+
+    res = requests.post(url, data=data)
+
+    print("응답:")
+    print(res.text)
 
 # ===== GitHub에서 상태 읽기 =====
 def load_state():
@@ -103,8 +113,4 @@ def main():
     save_state(found_now)
 
 if __name__ == "__main__":
-    print("실행 확인")
-
-    send_telegram("🔥 텔레그램 테스트 성공")
-
-    print("전송 완료")
+    send_telegram("🔥 GitHub 테스트")
