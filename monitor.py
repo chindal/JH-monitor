@@ -61,6 +61,8 @@ def load_state():
     }
 
     response = requests.get(url, headers=headers)
+    print("STATE 불러오기 응답:")
+    print(response.text)
 
     if response.status_code == 200:
 
@@ -104,7 +106,10 @@ def save_state(data):
         "sha": sha
     }
 
-    requests.put(url, headers=headers, json=body)
+    res = requests.put(url, headers=headers, json=body)
+
+    print("STATE 저장 응답:")
+    print(res.text)
 
 # ===== Selenium 브라우저 =====
 def create_driver():
