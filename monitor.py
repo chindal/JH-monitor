@@ -115,4 +115,4 @@ def main():
     save_state(found_now)
 
 if __name__ == "__main__":
-    send_telegram("🔥 GitHub 테스트")
+    main()
