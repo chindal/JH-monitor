@@ -141,7 +141,9 @@ def check_page():
 
             driver.get(url)
 
-            time.sleep(5)
+            driver.refresh()
+
+            time.sleep(10)
 
             html = driver.page_source
 
