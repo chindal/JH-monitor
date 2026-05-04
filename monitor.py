@@ -75,15 +75,17 @@ def save_state(state):
 def check_page():
     url = get_url()
 
-    response = requests.get(url)
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    response = requests.get(url, headers=headers)
 
     print("페이지 접속 완료")
 
     soup = BeautifulSoup(response.text, "html.parser")
 
     text = soup.get_text()
-
-    print(text)
 
     if "JH" in text:
         print("JH 발견!")
@@ -98,6 +100,8 @@ def main():
 
     found_before = load_state()
     found_now = check_page()
+
+    print("현재 감지 결과:", found_now)
 
     # 🚨 새로 생김
     if found_now and not found_before:
