@@ -89,7 +89,7 @@ def check_page():
                 cell_text = col.get_text(strip=True)
 
                 # 🎯 정확히 JH만 감지
-                if cell_text == "JH":
+                if "JH" in cell_text:
                     return True
 
     return False
