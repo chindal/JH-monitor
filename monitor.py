@@ -6,6 +6,7 @@ import base64
 import json
 import time
 import hashlib
+from zoneinfo import ZoneInfo
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -39,12 +40,14 @@ def send_telegram(message):
 # ===== 오늘 / 내일 URL =====
 def get_urls():
 
-    today = datetime.now()
+    korea_time = datetime.now(
+        ZoneInfo("Asia/Seoul")
+    )
 
-    tomorrow = today + timedelta(days=1)
+    tomorrow = korea_time + timedelta(days=1)
 
     return [
-        today.strftime("%Y-%m-%d"),
+        korea_time.strftime("%Y-%m-%d"),
         tomorrow.strftime("%Y-%m-%d")
     ]
 
@@ -210,10 +213,10 @@ def main():
 
             removed_dates.append(date_key)
 
-    # ===== 새로 생성 =====
+    # ===== 최초 감지 =====
     if added_dates:
 
-        message = "🚨 JH 새로 생성됨\n"
+        message = "🚨 JH 최초 감지\n"
 
         for d in added_dates:
             message += f"\n\n📅 {d}"
