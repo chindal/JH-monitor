@@ -103,4 +103,8 @@ def main():
     save_state(found_now)
 
 if __name__ == "__main__":
-    main()
+    print("실행 확인")
+
+    send_telegram("🔥 텔레그램 테스트 성공")
+
+    print("전송 완료")
