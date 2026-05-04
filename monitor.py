@@ -5,6 +5,7 @@ import os
 import base64
 import json
 import time
+import hashlib
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -35,6 +36,18 @@ def send_telegram(message):
     print("텔레그램 응답:")
     print(response.text)
 
+# ===== 오늘 / 내일 URL =====
+def get_urls():
+
+    today = datetime.now()
+
+    tomorrow = today + timedelta(days=1)
+
+    return [
+        today.strftime("%Y-%m-%d"),
+        tomorrow.strftime("%Y-%m-%d")
+    ]
+
 # ===== GitHub state 읽기 =====
 def load_state():
 
@@ -56,12 +69,12 @@ def load_state():
             return json.loads(decoded)
 
         except:
-            return []
+            return {}
 
-    return []
+    return {}
 
 # ===== GitHub state 저장 =====
-def save_state(data_list):
+def save_state(data):
 
     url = f"https://api.github.com/repos/{REPO}/contents/{STATE_FILE}"
 
@@ -76,7 +89,7 @@ def save_state(data_list):
     if response.status_code == 200:
         sha = response.json()["sha"]
 
-    content_text = json.dumps(data_list, ensure_ascii=False)
+    content_text = json.dumps(data, ensure_ascii=False)
 
     encoded_content = base64.b64encode(
         content_text.encode("utf-8")
@@ -106,132 +119,129 @@ def create_driver():
 # ===== 페이지 검사 =====
 def check_page():
 
-    found_rows = []
+    results = {}
 
     driver = create_driver()
 
     try:
 
-        driver.get(BASE_URL)
+        dates = get_urls()
 
-        time.sleep(5)
+        for date_str in dates:
 
-        dates = [
-            datetime.now(),
-            datetime.now() + timedelta(days=1)
-        ]
+            url = (
+                f"{BASE_URL}"
+                f"?Datepicker_date={date_str}"
+            )
 
-        for target_date in dates:
+            print(f"접속 중: {date_str}")
 
-            date_str = target_date.strftime("%Y-%m-%d")
-
-            print(f"검사 날짜: {date_str}")
-
-            # 날짜 입력칸 찾기
-            date_input = driver.find_element(By.NAME, "Datepicker_date")
-
-            # 기존 값 삭제
-            date_input.clear()
-
-            # 날짜 입력
-            date_input.send_keys(date_str)
-
-            # 엔터 대신 JS submit
-            driver.execute_script("document.forms[0].submit();")
+            driver.get(url)
 
             time.sleep(5)
 
-            soup = BeautifulSoup(driver.page_source, "html.parser")
+            html = driver.page_source
+
+            soup = BeautifulSoup(html, "html.parser")
 
             tables = soup.find_all("table")
 
+            matched_html = ""
+
             for table in tables:
 
-                rows = table.find_all("tr")
+                table_html = str(table)
 
-                for row in rows:
+                if "JH" in table_html:
+                    matched_html += table_html
 
-                    row_html = str(row)
+            if matched_html:
 
-                    if "JH" in row_html:
-                        full_text = f"[{date_str}] {row_html}"
-                        found_rows.append(full_text)
-                    row_text = row.get_text(" ", strip=True)
+                html_hash = hashlib.md5(
+                    matched_html.encode()
+                ).hexdigest()
 
-        print("감지 결과:")
-        print(found_rows)
+                results[date_str] = html_hash
+
+                print(f"{date_str} → JH 발견")
+
+            else:
+
+                print(f"{date_str} → JH 없음")
 
     finally:
 
         driver.quit()
 
-    return found_rows
+    return results
 
 # ===== 메인 =====
 def main():
 
-    old_data = load_state()
+    old_state = load_state()
 
-    new_data = check_page()
+    new_state = check_page()
 
     print("이전 상태:")
-    print(old_data)
+    print(old_state)
 
     print("현재 상태:")
-    print(new_data)
+    print(new_state)
 
-    added = [x for x in new_data if x not in old_data]
+    added_dates = []
+    changed_dates = []
+    removed_dates = []
 
-    removed = [x for x in old_data if x not in new_data]
+    # 새로 생김 / 변경
+    for date_key, new_hash in new_state.items():
 
-    # 🚨 새로 추가
-    if added:
+        if date_key not in old_state:
 
-        grouped_dates = {}
+            added_dates.append(date_key)
 
-    for item in added:
+        elif old_state[date_key] != new_hash:
 
-        date_only = item.split("]")[0].replace("[", "")
+            changed_dates.append(date_key)
 
-        if date_only not in grouped_dates:
-            grouped_dates[date_only] = []
+    # 삭제
+    for date_key in old_state:
 
-        grouped_dates[date_only].append(item)
+        if date_key not in new_state:
 
-    message = "🚨 JH 변경 감지\n"
+            removed_dates.append(date_key)
 
-    for date in grouped_dates:
+    # ===== 새로 생성 =====
+    if added_dates:
 
-        message += f"\n📅 {date}\n"
-        message += "- 변경 감지됨\n"
+        message = "🚨 JH 새로 생성됨\n"
 
-    send_telegram(message)
+        for d in added_dates:
+            message += f"\n📅 {d}"
 
-    # ❌ 삭제
-    if removed:
+        send_telegram(message)
 
-        grouped_dates = {}
+    # ===== 변경 =====
+    if changed_dates:
 
-    for item in removed:
+        message = "🔄 JH 변경 감지\n"
 
-        date_only = item.split("]")[0].replace("[", "")
+        for d in changed_dates:
+            message += f"\n📅 {d}"
 
-        if date_only not in grouped_dates:
-            grouped_dates[date_only] = []
+        send_telegram(message)
 
-        grouped_dates[date_only].append(item)
+    # ===== 삭제 =====
+    if removed_dates:
 
-    message = "❌ JH 삭제 감지\n"
+        message = "❌ JH 삭제됨\n"
 
-    for date in grouped_dates:
+        for d in removed_dates:
+            message += f"\n📅 {d}"
 
-        message += f"\n📅 {date}\n"
-        message += "- 삭제 감지됨\n"
-
-    send_telegram(message)
+        send_telegram(message)
 
     # 상태 저장
-    save_state(new_data)
+    save_state(new_state)
 
 if __name__ == "__main__":
     main()
