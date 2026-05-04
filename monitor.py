@@ -4,6 +4,11 @@ from datetime import datetime, timedelta
 import os
 import base64
 import json
+import time
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
 # ===== GitHub Secrets =====
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -13,26 +18,11 @@ REPO = os.getenv("GITHUB_REPOSITORY")
 
 STATE_FILE = "state.txt"
 
-# ===== 오늘 + 내일 URL =====
-def get_urls():
-    today = datetime.now()
+BASE_URL = "http://www.incheonpilot.com/pilot/pilot04.asp"
 
-    tomorrow = today + timedelta(days=1)
-
-    today_url = (
-        f"http://www.incheonpilot.com/pilot/pilot04.asp?"
-        f"Datepicker_date={today.strftime('%Y-%m-%d')}"
-    )
-
-    tomorrow_url = (
-        f"http://www.incheonpilot.com/pilot/pilot04.asp?"
-        f"Datepicker_date={tomorrow.strftime('%Y-%m-%d')}"
-    )
-
-    return [today_url, tomorrow_url]
-
-# ===== 텔레그램 메시지 =====
+# ===== 텔레그램 =====
 def send_telegram(message):
+
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
 
     data = {
@@ -47,6 +37,7 @@ def send_telegram(message):
 
 # ===== GitHub state 읽기 =====
 def load_state():
+
     url = f"https://api.github.com/repos/{REPO}/contents/{STATE_FILE}"
 
     headers = {
@@ -56,12 +47,14 @@ def load_state():
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
+
         content = response.json()["content"]
 
         decoded = base64.b64decode(content).decode("utf-8")
 
         try:
             return json.loads(decoded)
+
         except:
             return []
 
@@ -69,6 +62,7 @@ def load_state():
 
 # ===== GitHub state 저장 =====
 def save_state(data_list):
+
     url = f"https://api.github.com/repos/{REPO}/contents/{STATE_FILE}"
 
     headers = {
@@ -96,38 +90,81 @@ def save_state(data_list):
 
     requests.put(url, headers=headers, json=body)
 
-# ===== 사이트에서 JH 행 감지 =====
+# ===== Selenium 브라우저 =====
+def create_driver():
+
+    options = Options()
+
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    driver = webdriver.Chrome(options=options)
+
+    return driver
+
+# ===== 페이지 검사 =====
 def check_page():
 
     found_rows = []
 
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+    driver = create_driver()
 
-    urls = get_urls()
+    try:
 
-    for url in urls:
+        driver.get(BASE_URL)
 
-        response = requests.get(url, headers=headers)
+        time.sleep(3)
 
-        print(f"페이지 접속 완료: {url}")
+        dates = [
+            datetime.now(),
+            datetime.now() + timedelta(days=1)
+        ]
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        for target_date in dates:
 
-        tables = soup.find_all("table")
+            date_str = target_date.strftime("%Y-%m-%d")
 
-        for table in tables:
-            rows = table.find_all("tr")
+            print(f"검사 날짜: {date_str}")
 
-            for row in rows:
-                row_text = row.get_text(" ", strip=True)
+            # 날짜 입력칸 찾기
+            date_input = driver.find_element(By.NAME, "Datepicker_date")
 
-                if "JH" in row_text:
-                    found_rows.append(row_text)
+            # 기존 값 삭제
+            date_input.clear()
 
-    print("감지된 JH 행:")
-    print(found_rows)
+            # 날짜 입력
+            date_input.send_keys(date_str)
+
+            # 엔터 대신 JS submit
+            driver.execute_script("document.forms[0].submit();")
+
+            time.sleep(3)
+
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+
+            tables = soup.find_all("table")
+
+            for table in tables:
+
+                rows = table.find_all("tr")
+
+                for row in rows:
+
+                    row_text = row.get_text(" ", strip=True)
+
+                    if "JH" in row_text:
+
+                        full_text = f"[{date_str}] {row_text}"
+
+                        found_rows.append(full_text)
+
+        print("감지 결과:")
+        print(found_rows)
+
+    finally:
+
+        driver.quit()
 
     return found_rows
 
@@ -135,6 +172,7 @@ def check_page():
 def main():
 
     old_data = load_state()
+
     new_data = check_page()
 
     print("이전 상태:")
@@ -144,9 +182,10 @@ def main():
     print(new_data)
 
     added = [x for x in new_data if x not in old_data]
+
     removed = [x for x in old_data if x not in new_data]
 
-    # 🚨 새로 추가됨
+    # 🚨 새로 추가
     if added:
 
         message = "🚨 JH 추가됨!\n\n"
@@ -156,7 +195,7 @@ def main():
 
         send_telegram(message)
 
-    # ❌ 삭제됨
+    # ❌ 삭제
     if removed:
 
         message = "❌ JH 삭제됨!\n\n"
