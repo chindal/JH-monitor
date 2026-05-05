@@ -82,64 +82,54 @@ def create_driver():
 
 # ===== 페이지 검사 =====
 def check_page():
-
     results = {}
-
     driver = create_driver()
 
     try:
-
         dates = get_urls()
 
         for date_str in dates:
-
-            url = (
-                f"{BASE_URL}"
-                f"?Datepicker_date={date_str}"
-            )
-
+            url = f"{BASE_URL}?Datepicker_date={date_str}"
             print(f"접속 중: {date_str}")
 
             driver.get(url)
-
             driver.refresh()
-
+            
+            # 페이지 로딩을 위해 잠시 대기
             time.sleep(10)
 
             html = driver.page_source
-
             soup = BeautifulSoup(html, "html.parser")
 
-            tables = soup.find_all("table")
+            # --- 이 부분이 수정된 핵심 로직입니다 ---
+            matched_content = ""
+            rows = soup.find_all("tr") # 모든 행(줄)을 가져옴
 
-            matched_html = ""
+            for row in rows:
+                # 줄바꿈과 공백을 정리하고 텍스트만 추출
+                row_text = row.get_text(separator="|", strip=True)
 
-            for table in tables:
+                if "JH" in row_text:
+                    # JH가 포함된 줄의 글자 정보만 차곡차곡 쌓음
+                    matched_content += row_text + "\n"
 
-                table_html = str(table)
-
-                if "JH" in table_html:
-                    matched_html += table_html
-
-            if matched_html:
-
+            if matched_content:
+                # 깨끗하게 걸러진 '글자 데이터'만 가지고 해시 생성
                 html_hash = hashlib.md5(
-                    matched_html.encode()
+                    matched_content.encode('utf-8')
                 ).hexdigest()
 
                 results[date_str] = html_hash
-
-                print(f"{date_str} → JH 발견")
-
+                print(f"{date_str} → JH 데이터 추출 성공")
             else:
-
                 print(f"{date_str} → JH 없음")
+            # --------------------------------------
 
     finally:
-
         driver.quit()
 
     return results
+
 
 # ===== 메인 =====
 def main():
